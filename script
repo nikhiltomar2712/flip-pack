@@ -1,0 +1,113 @@
+cat > /home/claude/filekit/filekit/cli.py << 'PYEOF'
+"""
+FileKit CLI — entry point and argument parser.
+"""
+
+import argparse
+import sys
+
+from filekit import __version__
+from filekit.commands import (
+    cmd_info, cmd_checksum, cmd_rename,
+    cmd_dupes, cmd_clean, cmd_tree, cmd_stats,
+)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="filekit",
+        description="FileKit — a powerful file utility CLI toolkit.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+commands:
+  info       Show detailed metadata for a file or directory
+  checksum   Compute / verify file checksums
+  rename     Bulk rename files (prefix, suffix, numbering, dry-run)
+  dupes      Find and optionally delete duplicate files
+  clean      Remove junk files (.DS_Store, *.tmp, *.bak, ...)
+  tree       Display a visual directory tree
+  stats      Show file-type breakdown and size stats
+        """,
+    )
+    parser.add_argument("--version", action="version", version=f"filekit {__version__}")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    # ── info ──────────────────────────────────────────────────────────
+    p_info = sub.add_parser("info", help="Show file/directory metadata")
+    p_info.add_argument("path", help="Target file or directory")
+
+    # ── checksum ──────────────────────────────────────────────────────
+    p_sum = sub.add_parser("checksum", help="Compute / verify file checksum")
+    p_sum.add_argument("path", help="Target file")
+    p_sum.add_argument(
+        "--algo", nargs="+",
+        choices=["md5", "sha1", "sha256", "sha512"],
+        default=["sha256"],
+        help="Algorithm(s) to use (default: sha256)",
+    )
+    p_sum.add_argument("--verify", default=None, metavar="HASH",
+                       help="Verify against an expected hash value")
+
+    # ── rename ────────────────────────────────────────────────────────
+    p_ren = sub.add_parser("rename", help="Bulk rename files")
+    p_ren.add_argument("directory", help="Target directory")
+    p_ren.add_argument("--prefix", default="", help="Prepend text to filenames")
+    p_ren.add_argument("--suffix", default="", help="Append text to filenames (before ext)")
+    p_ren.add_argument("--ext", default="", help="Replace file extension (e.g. txt)")
+    p_ren.add_argument("--number", action="store_true", help="Prepend sequential numbers")
+    p_ren.add_argument("--pad", type=int, default=3, help="Zero-pad width for numbers (default 3)")
+    p_ren.add_argument("--start", type=int, default=1, help="Starting number (default 1)")
+    p_ren.add_argument("--lower", action="store_true", help="Lowercase filenames")
+    p_ren.add_argument("--upper", action="store_true", help="Uppercase filenames")
+    p_ren.add_argument("--dry-run", action="store_true", help="Preview changes without renaming")
+
+    # ── dupes ─────────────────────────────────────────────────────────
+    p_dup = sub.add_parser("dupes", help="Find duplicate files")
+    p_dup.add_argument("directory", help="Directory to scan")
+    p_dup.add_argument("--delete", action="store_true",
+                       help="Delete duplicates (keeps first copy)")
+    p_dup.add_argument("--no-recursive", action="store_true",
+                       help="Only scan top-level directory")
+
+    # ── clean ─────────────────────────────────────────────────────────
+    p_cln = sub.add_parser("clean", help="Remove junk/temp files")
+    p_cln.add_argument("directory", help="Directory to clean")
+    p_cln.add_argument("--patterns", nargs="+", metavar="PATTERN",
+                       help="Extra glob patterns to remove")
+    p_cln.add_argument("--dry-run", action="store_true",
+                       help="Preview without deleting")
+
+    # ── tree ──────────────────────────────────────────────────────────
+    p_tree = sub.add_parser("tree", help="Display directory tree")
+    p_tree.add_argument("path", nargs="?", default=".", help="Root directory (default: .)")
+    p_tree.add_argument("--depth", type=int, default=3, help="Max depth (default 3)")
+    p_tree.add_argument("--size", action="store_true", help="Show file sizes")
+    p_tree.add_argument("--hidden", action="store_true", help="Include hidden files")
+
+    # ── stats ─────────────────────────────────────────────────────────
+    p_stat = sub.add_parser("stats", help="File-type breakdown and size stats")
+    p_stat.add_argument("directory", nargs="?", default=".", help="Target directory (default: .)")
+
+    return parser
+
+
+def main():
+    parser = build_parser()
+    args = parser.parse_args()
+
+    dispatch = {
+        "info":     cmd_info,
+        "checksum": cmd_checksum,
+        "rename":   cmd_rename,
+        "dupes":    cmd_dupes,
+        "clean":    cmd_clean,
+        "tree":     cmd_tree,
+        "stats":    cmd_stats,
+    }
+
+    dispatch[args.command](args)
+
+
+if __name__ == "__main__":
+    main()
+PYEOF
