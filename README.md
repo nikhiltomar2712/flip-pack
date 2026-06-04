@@ -34,3 +34,12 @@ __version__ = "0.2.0"
 __author__ = "Your Name"
 __license__ = "MIT"
 EOF
+
+
+cat > /home/claude/filekit/filekit/cli.py << 'PYEOF'
+"""
+FileKit CLI — entry point and argument parser.
+"""
+
+import argparse
+import sys
