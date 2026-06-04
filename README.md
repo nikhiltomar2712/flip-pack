@@ -20,5 +20,5 @@ git init
 git add .
 git commit -m "Initial commit: FileKit file utility CLI"
 # Create a repo on GitHub, then:
-git remote add origin https://github.com/YOUR_USERNAME/filekit.git
+git remote add origin https://github.com/nikhiltomar2712/filekit.git
 git push -u origin main
