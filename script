@@ -1,3 +1,5 @@
+mkdir -p /home/claude/filekit/filekit/commands /home/claude/filekit/docs /home/claude/filekit/.github/ISSUE_TEMPLATE
+
 cat > /home/claude/filekit/filekit/cli.py << 'PYEOF'
 """
 FileKit CLI — entry point and argument parser.
